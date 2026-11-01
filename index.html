@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdBlueMedia Offerwall</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#0b1020;
+  color:white;
+}
+header{
+  text-align:center;
+  padding:35px 15px;
+  background:linear-gradient(135deg,#5035c9,#087f9e);
+}
+header h1{margin:0;font-size:30px}
+header p{color:#e4e9ff}
+.container{
+  max-width:950px;
+  margin:25px auto;
+  padding:15px;
+}
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+input{
+  flex:1;
+  min-width:0;
+  padding:13px;
+  border-radius:9px;
+  border:1px solid #34415e;
+  background:#151e33;
+  color:white;
+}
+button{
+  border:0;
+  border-radius:9px;
+  padding:12px 17px;
+  background:#7958ff;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+#status{color:#b9c5df;margin:15px 0}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:15px;
+}
+.offer{
+  background:#17223a;
+  border:1px solid #30405f;
+  border-radius:14px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  min-height:190px;
+}
+.offer h3{margin:0 0 12px}
+.offer p{color:#c2cce0;line-height:1.5}
+.offer a{
+  margin-top:auto;
+  text-decoration:none;
+  text-align:center;
+  background:#19c7a3;
+  color:#06251e;
+  padding:12px;
+  border-radius:8px;
+  font-weight:bold;
+}
+.empty{
+  color:#b9c5df;
+  padding:25px;
+  text-align:center;
+  grid-column:1/-1;
+}
+footer{
+  text-align:center;
+  color:#8998b5;
+  padding:25px;
+  font-size:12px;
+}
+@media(max-width:450px){
+  .toolbar{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🎁 Earn Rewards</h1>
+  <p>Complete offers and earn rewards</p>
+</header>
+
+<div class="container">
+
+  <div class="toolbar">
+    <input id="search" placeholder="Search offers...">
+    <button onclick="loadOffers()">Refresh</button>
+  </div>
+
+  <div id="status">Loading offers...</div>
+  <div id="offerContainer" class="grid"></div>
+
+</div>
+
+<footer>
+  Offers provided by AdBlueMedia
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+const USER_ID = "835790";
+const OFFERS_API_KEY = "YOUR_OFFERS_API_KEY";
+
+let allOffers = [];
+
+function loadOffers(){
+
+  const url =
+  "https://dtvpp42hfuyb2.cloudfront.net/public/offers/feed.php"
+  + "?user_id=" + encodeURIComponent(USER_ID)
+  + "&api_key=" + encodeURIComponent(OFFERS_API_KEY)
+  + "&s1="
+  + "&s2="
+  + "&callback=?";
+
+  $("#status").text("Loading offers...");
+  $("#offerContainer").empty();
+
+  $.getJSON(url,function(offers){
+
+    if(!Array.isArray(offers)){
+      $("#status").text("No offers available.");
+      return;
+    }
+
+    allOffers = offers.slice(0,10);
+    $("#status").text(allOffers.length + " offers available");
+    displayOffers(allOffers);
+
+  }).fail(function(){
+
+    $("#status").text(
+      "Unable to load offers. Please try again later."
+    );
+
+  });
+}
+
+function displayOffers(offers){
+
+  const container = $("#offerContainer");
+  container.empty();
+
+  if(!offers.length){
+    container.html(
+      '<div class="empty">No offers found.</div>'
+    );
+    return;
+  }
+
+  offers.forEach(function(offer){
+
+    const title = $("<div>").text(
+      offer.anchor || offer.conversion || "Available offer"
+    ).html();
+
+    const description = $("<div>").text(
+      offer.conversion || "Complete this offer as instructed."
+    ).html();
+
+    const link = $("<a>")
+      .attr("href",offer.url || "#")
+      .attr("target","_blank")
+      .attr("rel","noopener noreferrer")
+      .text("Complete Offer");
+
+    const card = $("<div>").addClass("offer");
+
+    card.append("<h3>"+title+"</h3>");
+    card.append("<p>"+description+"</p>");
+    card.append(link);
+
+    container.append(card);
+
+  });
+}
+
+$("#search").on("input",function(){
+
+  const keyword = $(this).val().toLowerCase();
+
+  const filtered = allOffers.filter(function(offer){
+
+    return (
+      (offer.anchor || "").toLowerCase().includes(keyword) ||
+      (offer.conversion || "").toLowerCase().includes(keyword)
+    );
+
+  });
+
+  displayOffers(filtered);
+
+});
+
+loadOffers();
+</script>
+
+</body>
+</html>
